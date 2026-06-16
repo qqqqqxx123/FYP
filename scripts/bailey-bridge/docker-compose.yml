@@ -1,0 +1,17 @@
+services:
+  bailey-bridge:
+    build: .
+    ports:
+      - "${BAILEY_BRIDGE_PORT:-3003}:3003"
+    environment:
+      PORT: "3003"
+      WWEBJS_AUTH_DIR: /data/wwebjs_auth
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+    volumes:
+      - wwebjs_auth_data:/data/wwebjs_auth
+    restart: unless-stopped
+    shm_size: "1gb"
+
+volumes:
+  wwebjs_auth_data:
+    driver: local

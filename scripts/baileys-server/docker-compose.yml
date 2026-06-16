@@ -1,0 +1,19 @@
+services:
+  baileys:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm start"
+    ports:
+      - "${BAILEYS_PORT:-4050}:4050"
+    environment:
+      PORT: "4050"
+      # Persist Baileys multi-file auth outside the container filesystem.
+      BAILEYS_AUTH_DIR: /data/auth
+    volumes:
+      - ./:/app
+      - baileys_auth_data:/data/auth
+    restart: unless-stopped
+
+volumes:
+  baileys_auth_data:
+    driver: local

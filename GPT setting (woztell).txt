@@ -1,0 +1,90 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: pg-main
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: n8n_pw_change
+      POSTGRES_DB: n8n_db
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n_db
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: n8n_pw_change
+
+      N8N_HOST: 192.168.200.131
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: https://video-n8n.cilab.ai/
+      N8N_PROXY_HOPS: 1
+
+      GENERIC_TIMEZONE: Asia/Hong_Kong
+      TZ: Asia/Hong_Kong
+
+      # recommended for production
+      N8N_ENCRYPTION_KEY: CHANGE_ME_32BYTE_HEX
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./n8n:/home/node/.n8n
+      - ./video-uploads:/data/video-uploads
+
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: nocodb
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      # Use same postgres container, but different DB name
+      NC_DB: "pg://postgres:5432?u=n8n&p=n8n_pw_change&d=nocodb_db"
+      NOCODB_URL: https://video-nocodb.cilab.ai
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nocodb_data:/usr/app/data
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9443:9443"
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  # OPTIONAL: only enable if you really need GPU LLM inference on this box
+  vllm-custom:
+    build: ./vllm-custom
+    container_name: vllm-custom
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./vllm-models:/root/.cache/huggingface
+    environment:
+      NVIDIA_VISIBLE_DEVICES: "all"
+      NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+    deploy: {}
+    runtime: nvidia
+
+volumes:
+  portainer_data:
