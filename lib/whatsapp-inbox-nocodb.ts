@@ -173,7 +173,7 @@ function recordPathsForTable(tableId: string, query: string): string[] {
 
 function recordMutationPathsForTable(
   tableId: string,
-  rowId?: string
+  rowId?: string | number
 ): { post: string[]; patch?: string[] } {
   const baseUrl = getBaseUrl();
   const bid = baseId();
@@ -186,7 +186,9 @@ function recordMutationPathsForTable(
   if (bid) {
     post.push(`${baseUrl}/api/v1/db/data/noco/${bid}/${encodedTable}`);
     if (rowId != null) {
-      patch?.push(`${baseUrl}/api/v1/db/data/noco/${bid}/${encodedTable}/${rowId}`);
+      patch?.push(
+        `${baseUrl}/api/v1/db/data/noco/${bid}/${encodedTable}/${encodeURIComponent(String(rowId))}`
+      );
     }
   }
   return { post, patch };
