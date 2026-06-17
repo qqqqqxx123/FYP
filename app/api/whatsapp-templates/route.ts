@@ -57,8 +57,13 @@ export async function GET(request: Request) {
         const { photos } = (await photosRes.json()) as {
           photos?: Array<{ photoId: string; url: string }>;
         };
-        if (Array.isArray(photos))
-          photoUrlById = new Map(photos.map((p) => [p.photoId, p.url]).filter(([, u]) => u));
+        if (Array.isArray(photos)) {
+          for (const photo of photos) {
+            if (photo.photoId && photo.url) {
+              photoUrlById.set(photo.photoId, photo.url);
+            }
+          }
+        }
       }
     } catch (e) {
       console.warn("Resolving template image IDs to URLs failed:", e);
