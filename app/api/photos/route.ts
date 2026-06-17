@@ -194,10 +194,14 @@ export async function GET() {
         const rawPhotoId = row.Photo_ID ?? row["Photo_ID"] ?? row.photo_id ?? row["photo_id"];
         const photoId = rawPhotoId != null ? String(rawPhotoId) : "";
         const rawRecordId = row.Id ?? row.id;
-        const rowId = Number(rawRecordId ?? 0);
+        const recordId =
+          typeof rawRecordId === "string" || typeof rawRecordId === "number"
+            ? rawRecordId
+            : index + 1;
+        const rowId = typeof recordId === "number" ? recordId : Number(recordId) || index + 1;
         return {
           id: rowId || index + 1,
-          recordId: rawRecordId != null ? rawRecordId : index + 1,
+          recordId,
           photoId: photoId || String(rawRecordId ?? index + 1),
           photoName,
           url,
