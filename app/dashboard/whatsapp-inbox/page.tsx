@@ -957,7 +957,7 @@ export default function WhatsAppInboxPage() {
             <div className="mt-2 flex justify-end">
               <button
                 type="button"
-                onClick={fetchConversations}
+                onClick={() => void fetchConversations()}
                 disabled={conversationsLoading || !activeSessionId}
                 className="rounded-lg border border-white/30 p-1.5 text-white/90 transition hover:bg-white/15 disabled:opacity-50"
                 aria-label="Refresh"
