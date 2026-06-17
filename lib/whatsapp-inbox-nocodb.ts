@@ -922,6 +922,7 @@ export async function listConversationsFromNocoDB(options?: ListInboxOptions): P
       existing &&
       !isGroup &&
       !looksLikeWhatsAppNumber(existing.phone ?? "") &&
+      phone &&
       looksLikeWhatsAppNumber(phone)
     ) {
       groups.set(contactKey, { ...existing, phone });
