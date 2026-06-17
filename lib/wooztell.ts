@@ -108,7 +108,7 @@ export function parseMessageEvent(
     nodeId ?? ev.messageId ?? ev.id ?? edgeCursor ?? Math.random().toString(36)
   );
   const key = ev.key && typeof ev.key === "object" ? (ev.key as Record<string, unknown>) : null;
-  const fromMe =
+  const fromMe = Boolean(
     ev.fromMe === true ||
     ev.from_me === true ||
     ev.isOutgoing === true ||
@@ -116,8 +116,9 @@ export function parseMessageEvent(
     ev.sentByMe === true ||
     ev.outgoing === true ||
     (typeof ev.direction === "string" && /^out/i.test(ev.direction)) ||
-    (key && (key.fromMe === true || key.from_me === true)) ||
-    (ourPhoneNorm && normalizePhoneForCompare(from) === ourPhoneNorm);
+    (key != null && (key.fromMe === true || key.from_me === true)) ||
+    (ourPhoneNorm != null && normalizePhoneForCompare(from) === ourPhoneNorm)
+  );
 
   return {
     conversationId,
@@ -622,7 +623,7 @@ export async function getMessages(
       const ts = ev.timestamp != null ? String(ev.timestamp) : undefined;
       const ourPhoneNorm = getOurPhoneNormalized();
       const key = ev.key && typeof ev.key === "object" ? (ev.key as Record<string, unknown>) : null;
-      const fromMe =
+      const fromMe = Boolean(
         ev.fromMe === true ||
         ev.from_me === true ||
         ev.isOutgoing === true ||
@@ -630,8 +631,9 @@ export async function getMessages(
         ev.sentByMe === true ||
         ev.outgoing === true ||
         (typeof ev.direction === "string" && /^out/i.test(ev.direction)) ||
-        (key && (key.fromMe === true || key.from_me === true)) ||
-        (ourPhoneNorm && normalizePhoneForCompare(from) === ourPhoneNorm);
+        (key != null && (key.fromMe === true || key.from_me === true)) ||
+        (ourPhoneNorm != null && normalizePhoneForCompare(from) === ourPhoneNorm)
+      );
       messages.push({
         id: String(node?.id ?? ev.messageId ?? ev.id ?? edge.cursor ?? Math.random()),
         conversationId,
