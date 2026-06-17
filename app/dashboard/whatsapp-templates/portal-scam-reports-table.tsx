@@ -13,6 +13,7 @@ export interface PortalScamReportItem {
   contactDetail?: string;
   adminComment?: string;
   status?: string;
+  category?: string;
   isOwned?: boolean;
   canEdit?: boolean;
   image1?: string;

@@ -203,7 +203,7 @@ export default function WhatsAppTemplatesPage() {
     return readAdminComments[String(reportId)] === comment.trim();
   }
 
-  function openAdminCommentDialog(t: TemplateListItem) {
+  function openAdminCommentDialog(t: PortalScamReportItem) {
     const reportId = String(t.id ?? "");
     const message = t.adminComment?.trim() ?? "";
     if (!reportId || !message) return;
@@ -267,7 +267,7 @@ export default function WhatsAppTemplatesPage() {
     setEditingTemplateId(null);
   }
 
-  async function handleEditTemplate(t: TemplateListItem) {
+  async function handleEditTemplate(t: PortalScamReportItem) {
     const id = t.id;
     if (isScamReportApproved(t.status ?? t.category ?? "")) {
       alert("Approved reports cannot be edited.");
@@ -338,7 +338,7 @@ export default function WhatsAppTemplatesPage() {
     }
   }
 
-  async function handleDeleteTemplate(t: TemplateListItem) {
+  async function handleDeleteTemplate(t: PortalScamReportItem) {
     const id = t.id;
     if (isScamReportApproved(t.status ?? t.category ?? "")) {
       alert("Approved reports cannot be deleted.");
