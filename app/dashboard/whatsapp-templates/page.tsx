@@ -24,6 +24,13 @@ interface StoredReportImage {
   attachment: unknown[];
 }
 
+function toRecordId(value: unknown): string | number | null {
+  if (value == null || value === "") return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const text = String(value).trim();
+  return text || null;
+}
+
 /** Presigned NocoDB/S3 URLs load directly; unsigned S3 urls go through proxy. */
 function getPhotoSrc(url: string): string {
   if (!url) return "";
@@ -274,8 +281,13 @@ export default function WhatsAppTemplatesPage() {
       alert("This template cannot be edited: missing record ID. Please refresh the list.");
       return;
     }
+    const recordId = toRecordId(id);
+    if (recordId == null) {
+      alert("This template cannot be edited: missing record ID. Please refresh the list.");
+      return;
+    }
     try {
-      const idStr = String(id).trim();
+      const idStr = String(recordId).trim();
       const res = await fetch(`/api/scam-reports/${encodeURIComponent(idStr)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load template");
       const data = (await res.json()) as {
@@ -318,7 +330,7 @@ export default function WhatsAppTemplatesPage() {
       setRegion(data.region ?? "");
       setStoredReportImages(storedImages);
       setInitialStoredImageCount(storedImages.length);
-      setEditingTemplateId(id);
+      setEditingTemplateId(recordId);
       setShowCreateTemplateModal(true);
     } catch (e) {
       alert("Failed to load template for editing.");
@@ -340,10 +352,15 @@ export default function WhatsAppTemplatesPage() {
       alert("This template cannot be deleted: missing record ID. Please refresh the list.");
       return;
     }
+    const recordId = toRecordId(id);
+    if (recordId == null) {
+      alert("This template cannot be deleted: missing record ID. Please refresh the list.");
+      return;
+    }
     if (!confirm(`Delete template "${t.templateName || "Untitled"}"? This cannot be undone.`)) return;
-    setIsDeletingTemplateId(id);
+    setIsDeletingTemplateId(recordId);
     try {
-      const idStr = String(id).trim();
+      const idStr = String(recordId).trim();
       const res = await fetch(`/api/scam-reports/${encodeURIComponent(idStr)}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
       fetchTemplates();
