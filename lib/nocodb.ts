@@ -57,13 +57,13 @@ async function getUsersTableCandidates(
   if (configured) candidates.push(configured);
   candidates.push("Users");
 
-  if (!baseId) return [...new Set(candidates.filter(Boolean))];
+  if (!baseId) return Array.from(new Set(candidates.filter(Boolean)));
 
   try {
     const res = await fetch(`${baseUrl}/api/v2/meta/bases/${baseId}/tables`, {
       headers: { "xc-token": token, "Content-Type": "application/json" },
     });
-    if (!res.ok) return [...new Set(candidates.filter(Boolean))];
+    if (!res.ok) return Array.from(new Set(candidates.filter(Boolean)));
 
     const data = (await res.json()) as {
       list?: Array<{ id?: string; table_name?: string; title?: string }>;
@@ -107,7 +107,7 @@ async function getUsersTableCandidates(
     // metadata discovery is optional
   }
 
-  return [...new Set(candidates.filter(Boolean))];
+  return Array.from(new Set(candidates.filter(Boolean)));
 }
 
 function buildUsersRecordPaths(
@@ -768,7 +768,7 @@ async function getWhatsAppConnectionsTableCandidates(
       // metadata discovery is optional
     }
   }
-  return [...new Set(candidates.filter(Boolean))]
+  return Array.from(new Set(candidates.filter(Boolean)))
 }
 
 async function fetchWhatsAppConnectionRows(): Promise<WhatsAppConnectionRecord[]> {

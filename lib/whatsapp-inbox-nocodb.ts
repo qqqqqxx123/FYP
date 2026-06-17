@@ -106,7 +106,7 @@ async function resolveNocoTableCandidates(
     }
   }
 
-  return [...new Set(resolved.filter(Boolean))];
+  return Array.from(new Set(resolved.filter(Boolean)));
 }
 
 async function getCachedTableCandidates(
