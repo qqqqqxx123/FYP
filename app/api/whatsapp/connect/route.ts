@@ -287,7 +287,7 @@ export async function POST(request: Request) {
 
     // Baileys server
     const res = await fetchWithTimeout(
-      `${BAILEYS_API_URL}/connect?sessionId=${encodeURIComponent(sessionId)}`,
+      `${base}/connect?sessionId=${encodeURIComponent(sessionId)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

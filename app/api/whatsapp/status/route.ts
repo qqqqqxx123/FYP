@@ -286,7 +286,7 @@ export async function GET(request: Request) {
   }
 
   const baileyStatus = await fetchBaileySessionStatusFromBridge(
-    BAILEYS_API_URL,
+    base,
     sessionId,
     headers
   );
@@ -296,7 +296,7 @@ export async function GET(request: Request) {
 
   try {
     const res = await fetchWithTimeout(
-      `${BAILEYS_API_URL}/status?sessionId=${encodeURIComponent(sessionId)}`
+      `${base}/status?sessionId=${encodeURIComponent(sessionId)}`
     );
     const data = (await res.json().catch(() => ({}))) as {
       connected?: boolean;
