@@ -1,72 +1,122 @@
-# Montresor Infni CRM
+# AI.S.D.S Portal
 
-CRM built with **NocoDB** (data and auth) and **Wooztell** (messaging). This repo is the custom Next.js app (login and future dashboard).
+A Next.js portal for user/admin operations, WhatsApp connection management, and message workflow integrations.
 
-## Setup
+## What This Project Is
 
-1. **Install dependencies**
+This repository is an internal web portal (not a CRM system).  
+It provides:
+
+- OTP-based login flow
+- User dashboard pages
+- WhatsApp Connect (multi-slot)
+- WhatsApp Inbox
+- Admin user management
+- Security news panel
+
+## Tech Stack
+
+- Next.js 14 (App Router)
+- React 18 + TypeScript
+- Tailwind CSS
+- NocoDB (users + portal data)
+- Wooztell APIs
+- WhatsApp bridge services (wa-bridge / wwebjs bridge / Baileys bridge)
+
+## Local Setup
+
+1. Install dependencies
    ```bash
    npm install
    ```
 
-2. **Configure NocoDB**
-   - Copy `.env.example` to `.env.local`.
-   - Set `NOCODB_BASE_URL` to your NocoDB instance (e.g. `https://your-app.nocodb.com` or `http://localhost:8080`).
+2. Create local env file
+   ```bash
+   cp .env.example .env.local
+   ```
+   PowerShell:
+   ```powershell
+   Copy-Item .env.example .env.local
+   ```
 
-3. **Create users in NocoDB**
-   - In NocoDB, invite users (Account / Workspace) so they can sign in with email/password.
-   - Optionally create the **CRM Team Members** table and rows as described in `docs/NOCODB-USER-TABLE-DESIGN.md`.
+3. Fill required `.env.local` values
+   - `NOCODB_BASE_URL`
+   - `NOCODB_API_TOKEN` (or `NOCODB_XC_TOKEN`)
+   - `NOCODB_BASE_ID`
+   - `NOCODB_USERS_TABLE_ID`
+   - `WA_BRIDGE_URL` (or `BAILEYS_API_URL` / `BAILEY_API_URL`)
 
-4. **Run the app**
+4. Start dev server
    ```bash
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000). Use **Sign in** to open the login page.
 
-## Login
+5. Open `http://localhost:3000`
 
-- The login page calls NocoDB’s auth API: `POST /api/v1/auth/user/signin` with email and password.
-- Credentials are the same as in your NocoDB workspace.
-- After a successful login you get a token; in production you’d store it in an HTTP-only cookie and redirect to a dashboard.
+## Core Modules
 
-## NocoDB user table for CRM
+### Login
 
-See **`docs/NOCODB-USER-TABLE-DESIGN.md`** for:
+- OTP request + verify flow
+- Session cookie-based auth
+- Supports webhook-based auth orchestration
 
-- Suggested **CRM Team Members** (or **CRM Users**) table structure.
-- How it links to NocoDB sign-in (by email).
-- Fields for Wooztell (e.g. Wooztell Member Id, Phone) for future integration.
+### WhatsApp Connect
 
-## WhatsApp Inbox (Wooztell)
+- Up to 5 connection slots per user
+- Connect / disconnect / remove slot
+- Slot state stored in NocoDB (`Connect_whatsapp`)
+- Remove slot shows loading state while delete is in progress
 
-The **View WhatsApp** / **WhatsApp Inbox** page (`/dashboard/whatsapp-inbox`) shows conversations and messages from Wooztell and lets you reply. No Wooztell branding; tokens stay server-side.
+### WhatsApp Inbox
 
-### Setup
+- Multi-session support via session switcher
+- Conversation + message view
+- Handles direct and group chat mapping
+- Send messages from portal UI
 
-1. **Wooztell account and channel**
-   - Create a [Wooztell](https://woztell.com) account and a WhatsApp Cloud channel (see `docs/WOOZTELL-WHATSAPP-SETUP.md`).
+### Admin Portal
 
-2. **Access token**
-   - In Wooztell: **Settings** → **Access Token**. Create a token with scopes for Open API (conversation history) and Bot API (send).
+- User list and status management
+- Connected WhatsApp visibility per user
+- Shows currently connected number(s) only
 
-3. **Environment variables** (in `.env.local`; never commit tokens)
-   - `WOOZTELL_API_BASE_URL` — Open API (GraphQL) base URL, e.g. `https://open.api.woztell.com/v3`.
-   - `WOOZTELL_API_TOKEN` — Your Wooztell access token.
-   - `WOOZTELL_CHANNEL_ID` — Your WhatsApp channel ID (required for sending).
-   - Optional: `WOOZTELL_BOT_API_URL` — Bot API base (default: `https://bot.api.woztell.com`).
-   - Optional: `WOOZTELL_WEBHOOK_SECRET` — For future webhook signature verification.
+## Scripts
 
-4. **Privacy**
-   - No message content or phone numbers are written to a database or logged. API routes set `Cache-Control: no-store`.
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run backend:start
+npm run migrate:whatsapp-connections
+```
 
-### API routes (server-only)
+## Deploy to VPS (GitHub)
 
-- `GET /api/whatsapp/conversations` — List conversations (query: `first`, `after`).
-- `GET /api/whatsapp/conversations/:id/messages` — Messages for a conversation (query: `first`, `after`).
-- `POST /api/whatsapp/send` — Send text (body: `{ conversationId or to, text }`).
+1. Push this repo to GitHub
+2. SSH into VPS and install Node.js 20+, Nginx, PM2
+3. Clone repo and configure `.env.local`
+4. Build and run with PM2:
+   ```bash
+   npm ci
+   npm run build
+   pm2 start npm --name ring3-portal -- start
+   pm2 save
+   ```
+5. Configure Nginx reverse proxy to `127.0.0.1:3000`
+6. Enable HTTPS (Certbot)
+7. Optional: run WhatsApp bridge with Docker from `scripts/bailey-bridge`
 
-## Next steps
+## Important Docs
 
-- Add session/cookie after login and redirect to `/dashboard`.
-- Build dashboard and fetch **CRM Team Members** by current user email.
-- Add Contacts/Leads tables in NocoDB and integrate Wooztell.
+- `docs/WA-BRIDGE-SETUP.md`
+- `docs/NOCODB-WHATSAPP-CONNECTIONS-TABLE.md`
+- `docs/NOCODB-WHATSAPP-INBOX-TABLES.md`
+- `docs/WOOZTELL-WHATSAPP-SETUP.md`
+
+## Notes
+
+- Keep `.env.local` private (never commit secrets)
+- Use production webhook URLs for live deployment
+- Ensure HTTPS is enabled in production for secure auth cookies
