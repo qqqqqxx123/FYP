@@ -22,6 +22,18 @@ function getRawImage(r: Record<string, unknown>, key: string): string | undefine
   return undefined;
 }
 
+function getRecordId(r: Record<string, unknown>): unknown {
+  if (r.Id !== undefined && r.Id !== null) return r.Id;
+  if (r.id !== undefined && r.id !== null) return r.id;
+  if (r.ID !== undefined && r.ID !== null) return r.ID;
+  const key = Object.keys(r).find((k) => k.toLowerCase() === "id");
+  if (key) {
+    const v = r[key];
+    if (v !== undefined && v !== null) return v;
+  }
+  return undefined;
+}
+
 export async function GET(request: Request) {
   try {
     if (!isWhatsappTemplateNocodbConfigured()) {
@@ -74,18 +86,6 @@ export async function GET(request: Request) {
       if (isPhotoId(raw)) return photoUrlById.get(raw) ?? raw;
       return raw;
     };
-
-    function getRecordId(r: Record<string, unknown>): unknown {
-      if (r.Id !== undefined && r.Id !== null) return r.Id;
-      if (r.id !== undefined && r.id !== null) return r.id;
-      if (r.ID !== undefined && r.ID !== null) return r.ID;
-      const key = Object.keys(r).find((k) => k.toLowerCase() === "id");
-      if (key) {
-        const v = r[key];
-        if (v !== undefined && v !== null) return v;
-      }
-      return undefined;
-    }
 
     const templates = list.map((row) => {
       const r = row as Record<string, unknown>;

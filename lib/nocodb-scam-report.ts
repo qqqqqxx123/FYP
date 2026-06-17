@@ -229,24 +229,24 @@ export function buildScamReportRowPayload(input: {
   return payload;
 }
 
+function getNocoDbRecordId(r: Record<string, unknown>): unknown {
+  if (r.Id !== undefined && r.Id !== null) return r.Id;
+  if (r.id !== undefined && r.id !== null) return r.id;
+  if (r.ID !== undefined && r.ID !== null) return r.ID;
+  const key = Object.keys(r).find((k) => k.toLowerCase() === "id");
+  if (key) {
+    const v = r[key];
+    if (v !== undefined && v !== null) return v;
+  }
+  return undefined;
+}
+
 export function mapScamReportRecord(row: Record<string, unknown>) {
   const getRaw = (...keys: string[]) => getRowStringValue(row, ...keys);
 
   const getAttachmentUrl = (key: string): string | undefined => {
     return resolveAttachmentDisplayUrl(row[key]);
   };
-
-  function getRecordId(r: Record<string, unknown>): unknown {
-    if (r.Id !== undefined && r.Id !== null) return r.Id;
-    if (r.id !== undefined && r.id !== null) return r.id;
-    if (r.ID !== undefined && r.ID !== null) return r.ID;
-    const key = Object.keys(r).find((k) => k.toLowerCase() === "id");
-    if (key) {
-      const v = r[key];
-      if (v !== undefined && v !== null) return v;
-    }
-    return undefined;
-  }
 
   const rawDescription = getRaw("Description");
   const columnDate = normalizeReportDate(getRaw("Date_of_Incident", "Date of Incident"));
@@ -263,7 +263,7 @@ export function mapScamReportRecord(row: Record<string, unknown>) {
   }
 
   return {
-    id: getRecordId(row),
+    id: getNocoDbRecordId(row),
     templateName: getRaw("Scam_Type"),
     messageBody: description,
     language: getRaw("Scam_Type"),
