@@ -1231,21 +1231,27 @@ export default function WhatsAppInboxPage() {
                                   </p>
                                 ) : null}
                                 {m.imageUrl ? (
-                                  <img
-                                    src={getInboxMediaSrc(m.imageUrl)}
-                                    alt="WhatsApp image"
-                                    className="mb-1 max-h-72 max-w-full rounded-md object-contain"
-                                    loading="lazy"
-                                  />
+                                  <div className="mb-2 flex justify-center">
+                                    <img
+                                      src={getInboxMediaSrc(m.imageUrl)}
+                                      alt="WhatsApp image"
+                                      className="max-h-72 max-w-full rounded-md object-contain"
+                                      loading="lazy"
+                                    />
+                                  </div>
                                 ) : null}
                                 {m.voiceUrl ? (
-                                  <audio
-                                    controls
-                                    preload="metadata"
-                                    className="mb-1 w-full max-w-[18rem]"
-                                  >
-                                    <source src={getInboxMediaSrc(m.voiceUrl)} />
-                                  </audio>
+                                  <div className="mb-2 flex justify-center">
+                                    <div className="w-full max-w-[18rem] rounded-lg bg-gradient-to-r from-[#075e54] to-emerald-600 p-1.5 shadow-sm">
+                                      <audio
+                                        controls
+                                        preload="metadata"
+                                        className="inbox-voice-player block w-full"
+                                      >
+                                        <source src={getInboxMediaSrc(m.voiceUrl)} />
+                                      </audio>
+                                    </div>
+                                  </div>
                                 ) : null}
                                 {shouldShowMessageText(m) ? (
                                   <p className="whitespace-pre-wrap break-words text-[18.5px] leading-[25px]">

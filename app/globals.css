@@ -19,4 +19,23 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .inbox-voice-player {
+    width: 100%;
+    height: 2.5rem;
+    accent-color: #10b981;
+    color-scheme: light;
+  }
+
+  .inbox-voice-player::-webkit-media-controls-enclosure {
+    border-radius: 0.5rem;
+    background: linear-gradient(90deg, #075e54 0%, #059669 100%);
+  }
+
+  .inbox-voice-player::-webkit-media-controls-play-button,
+  .inbox-voice-player::-webkit-media-controls-mute-button,
+  .inbox-voice-player::-webkit-media-controls-volume-slider,
+  .inbox-voice-player::-webkit-media-controls-timeline {
+    filter: brightness(0) invert(1);
+  }
 }
