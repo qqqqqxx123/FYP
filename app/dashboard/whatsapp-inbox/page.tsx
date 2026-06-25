@@ -224,11 +224,39 @@ interface Message {
   id: string;
   conversationId: string;
   text?: string;
+  imageUrl?: string;
+  voiceUrl?: string;
   fromMe?: boolean;
   createdAt?: string;
   scamPercentage?: number;
   scamDescription?: string;
   senderName?: string;
+}
+
+/** Load NocoDB/S3 media in the browser; private buckets go through the photos proxy. */
+function getInboxMediaSrc(url: string): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  if (/X-Amz-Signature=/i.test(trimmed) && /X-Amz-Expires=/i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("/")) {
+    return `/api/photos/proxy?url=${encodeURIComponent(trimmed)}`;
+  }
+  if (
+    trimmed.includes("amazonaws.com") ||
+    (trimmed.includes("s3.") && trimmed.includes("nocohub")) ||
+    trimmed.includes("nocodb")
+  ) {
+    return `/api/photos/proxy?url=${encodeURIComponent(trimmed)}`;
+  }
+  return trimmed;
+}
+
+function shouldShowMessageText(message: Message): boolean {
+  const text = message.text?.trim();
+  if (!text) return false;
+  if (message.imageUrl && /^\[image\]/i.test(text)) return false;
+  if (message.voiceUrl && /^\[voice message\]/i.test(text)) return false;
+  return true;
 }
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -1202,13 +1230,30 @@ export default function WhatsAppInboxPage() {
                                     {m.senderName}
                                   </p>
                                 ) : null}
-                                {(m.text !== undefined && m.text !== "") ? (
+                                {m.imageUrl ? (
+                                  <img
+                                    src={getInboxMediaSrc(m.imageUrl)}
+                                    alt="WhatsApp image"
+                                    className="mb-1 max-h-72 max-w-full rounded-md object-contain"
+                                    loading="lazy"
+                                  />
+                                ) : null}
+                                {m.voiceUrl ? (
+                                  <audio
+                                    controls
+                                    preload="metadata"
+                                    className="mb-1 w-full max-w-[18rem]"
+                                  >
+                                    <source src={getInboxMediaSrc(m.voiceUrl)} />
+                                  </audio>
+                                ) : null}
+                                {shouldShowMessageText(m) ? (
                                   <p className="whitespace-pre-wrap break-words text-[18.5px] leading-[25px]">
                                     {m.text}
                                   </p>
-                                ) : (
+                                ) : !m.imageUrl && !m.voiceUrl ? (
                                   <p className="text-[18.5px] italic text-[#667781]">(message)</p>
-                                )}
+                                ) : null}
                                 {hasScamRisk && (
                                   <div
                                     className={`mt-2 text-[14px] leading-snug ${getScamRiskColorClass(scamPct)}`}

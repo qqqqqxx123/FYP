@@ -4,12 +4,13 @@ import {
   isAiScamDetectAgentContact,
   isSameWhatsAppPhone,
 } from "@/lib/whatsapp-phone";
+import { resolveAttachmentDisplayUrl } from "@/lib/nocodb-scam-report";
 import { isNocoRateLimitError } from "@/lib/whatsapp-inbox-api-cache";
 
 /**
  * NocoDB helpers for WhatsApp Inbox cache.
  * Tables: WhatsApp_Conversations (Conversation_Id, Name, Whatsapp_number, Last_Message, Updated_Time, Synced_At),
- *         Whatsapp_Message (From, To, Message_id, Message_type, Message, Scam_percentage,
+ *         Whatsapp_Message (From, To, Message_id, Message_type, Message, Image, Voice, Scam_percentage,
  *         Scam_percentage_description, Media_url, Mime_type, File_name, Direction, timestamp,
  *         session_id, Push_name, Contact_name, Is_group, Chat_name),
  *         WhatsApp_SyncState (Sync_Key, Last_Cursor, Last_Synced_At) - single row key "default".
@@ -804,17 +805,47 @@ function resolveConversationPhone(
   return candidate || existingPhone || contactId;
 }
 
+function getAttachmentUrlFromRow(
+  row: Record<string, unknown>,
+  ...keys: string[]
+): string | undefined {
+  for (const key of keys) {
+    const url = resolveAttachmentDisplayUrl(row[key]);
+    if (url) return url;
+  }
+  return undefined;
+}
+
+function getMessageMedia(row: Record<string, unknown>): {
+  imageUrl?: string;
+  voiceUrl?: string;
+} {
+  const messageType = getRowString(row, "Message_type", "message_type").toLowerCase();
+  const mediaUrl = getRowString(row, "Media_url", "media_url") || undefined;
+
+  const imageUrl =
+    getAttachmentUrlFromRow(row, "Image", "image") ??
+    (messageType === "image" ? mediaUrl : undefined);
+
+  const voiceUrl =
+    getAttachmentUrlFromRow(row, "Voice", "voice") ??
+    (messageType === "ptt" || messageType === "audio" ? mediaUrl : undefined);
+
+  return { imageUrl, voiceUrl };
+}
+
 function formatWhatsappMessageText(row: Record<string, unknown>): string | undefined {
   const messageType = getRowString(row, "Message_type", "message_type").toLowerCase();
   const body = getRowString(row, "Message", "message", "Text", "text");
-  const mediaUrl = getRowString(row, "Media_url", "media_url");
+  const { imageUrl, voiceUrl } = getMessageMedia(row);
 
-  if (messageType === "image") return mediaUrl ? `[image] ${mediaUrl}` : "[image]";
-  if (messageType === "ptt") return "[voice message]";
+  if (body) return body;
+  if (imageUrl || messageType === "image") return "[image]";
+  if (voiceUrl || messageType === "ptt" || messageType === "audio") return "[voice message]";
   if (messageType === "location") return "[location]";
   if (messageType && messageType !== "chat" && !body) return `[${messageType}]`;
 
-  return body || undefined;
+  return undefined;
 }
 
 function getScamFields(row: Record<string, unknown>): {
@@ -844,6 +875,8 @@ function mapWhatsappMessageRow(
   id: string;
   conversationId: string;
   text?: string;
+  imageUrl?: string;
+  voiceUrl?: string;
   fromMe?: boolean;
   createdAt?: string;
   scamPercentage?: number;
@@ -857,6 +890,7 @@ function mapWhatsappMessageRow(
   if (!id) return null;
 
   const text = formatWhatsappMessageText(row);
+  const { imageUrl, voiceUrl } = getMessageMedia(row);
 
   const fromMe = getMessageFromMe(row);
 
@@ -870,6 +904,8 @@ function mapWhatsappMessageRow(
     id,
     conversationId: getRowString(row, "From", "from") || conversationId,
     text,
+    imageUrl,
+    voiceUrl,
     fromMe,
     createdAt,
     scamPercentage: scam.scamPercentage,
@@ -961,6 +997,8 @@ export async function listMessagesFromNocoDB(
     id: string;
     conversationId: string;
     text?: string;
+    imageUrl?: string;
+    voiceUrl?: string;
     fromMe?: boolean;
     createdAt?: string;
     scamPercentage?: number;
