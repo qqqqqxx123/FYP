@@ -1220,16 +1220,16 @@ export default function WhatsAppInboxPage() {
                           return (
                           <div
                             key={m.id}
-                            className={`flex w-full items-end gap-2 ${isSentByUs ? "justify-end" : "justify-start"}`}
+                            className={`flex w-full items-center gap-1.5 ${isSentByUs ? "justify-end" : "justify-start"}`}
                           >
                             <div
-                              className={`relative flex max-w-[min(85%,40rem)] gap-2 px-3 py-2 shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] ${
+                              className={`relative max-w-[min(85%,40rem)] px-3 py-2 shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] ${
                                 isSentByUs
-                                  ? "rounded-lg rounded-tr-none bg-[#d9fdd3] text-[#111b21]"
-                                  : "rounded-lg rounded-tl-none bg-white text-[#111b21]"
+                                  ? "order-2 rounded-lg rounded-tr-none bg-[#d9fdd3] text-[#111b21]"
+                                  : "order-1 rounded-lg rounded-tl-none bg-white text-[#111b21]"
                               }`}
                             >
-                              <div className="min-w-0 flex-1">
+                              <div className="min-w-0">
                                 {!isSentByUs && m.senderName ? (
                                   <p className="mb-0.5 text-[12.8px] font-semibold leading-snug text-[#e5425d]">
                                     {m.senderName}
@@ -1280,18 +1280,20 @@ export default function WhatsAppInboxPage() {
                                   {formatMessageTimeShort(m.createdAt)}
                                 </p>
                               </div>
-                              {isHighScamRisk && (
-                                <button
-                                  type="button"
-                                  onClick={() => openScamReport(m)}
-                                  className="shrink-0 self-center rounded-full p-0.5 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
-                                  aria-label="View scam report"
-                                  title="View scam report"
-                                >
-                                  <HighScamRiskIcon className="h-7 w-7" />
-                                </button>
-                              )}
                             </div>
+                            {isHighScamRisk ? (
+                              <button
+                                type="button"
+                                onClick={() => openScamReport(m)}
+                                className={`shrink-0 rounded-full p-0.5 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 ${
+                                  isSentByUs ? "order-1" : "order-2"
+                                }`}
+                                aria-label="View scam report"
+                                title="View scam report"
+                              >
+                                <HighScamRiskIcon className="h-7 w-7" />
+                              </button>
+                            ) : null}
                           </div>
                           );
                         })}
