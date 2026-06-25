@@ -100,6 +100,18 @@ function formatDateDivider(createdAt: string): string {
   return `${weekday}, ${month} ${day}${ordinal(day)} ${year}`;
 }
 
+const MESSAGES_NEAR_BOTTOM_PX = 96;
+
+function isMessagesNearBottom(container: HTMLElement): boolean {
+  const distanceFromBottom =
+    container.scrollHeight - container.scrollTop - container.clientHeight;
+  return distanceFromBottom <= MESSAGES_NEAR_BOTTOM_PX;
+}
+
+function scrollMessagesToBottom(container: HTMLElement, behavior: ScrollBehavior) {
+  container.scrollTo({ top: container.scrollHeight, behavior });
+}
+
 interface SyncStatusPayload {
   isBackfilling: boolean;
   latestDbMessageTs: number | null;
@@ -412,6 +424,9 @@ export default function WhatsAppInboxPage() {
   const [messagesCursor, setMessagesCursor] = useState<string | null>(null);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const shouldStickToBottomRef = useRef(true);
+  const isInitialMessagesScrollRef = useRef(false);
   const conversationsPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const messagesPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -442,8 +457,16 @@ export default function WhatsAppInboxPage() {
     setSyncStatus(null);
     setOverlayDismissedByUser(false);
     setBackfillCompleteToast(null);
+    shouldStickToBottomRef.current = true;
+    isInitialMessagesScrollRef.current = false;
     window.localStorage.setItem(WHATSAPP_INBOX_SESSION_STORAGE_KEY, sessionId);
   }, []);
+
+  function handleMessagesScroll() {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    shouldStickToBottomRef.current = isMessagesNearBottom(container);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -687,6 +710,11 @@ export default function WhatsAppInboxPage() {
   }, [fetchContacts]);
 
   useEffect(() => {
+    shouldStickToBottomRef.current = true;
+    isInitialMessagesScrollRef.current = true;
+  }, [selectedId]);
+
+  useEffect(() => {
     if (selectedId && activeSessionId) {
       fetchMessages(selectedId, false);
     } else {
@@ -697,8 +725,25 @@ export default function WhatsAppInboxPage() {
   }, [selectedId, activeSessionId, fetchMessages]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (messagesLoading || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const behavior: ScrollBehavior = isInitialMessagesScrollRef.current ? "auto" : "smooth";
+    if (isInitialMessagesScrollRef.current) {
+      isInitialMessagesScrollRef.current = false;
+    }
+
+    if (!shouldStickToBottomRef.current && behavior === "smooth") return;
+
+    requestAnimationFrame(() => {
+      scrollMessagesToBottom(container, behavior);
+      if (behavior === "auto") {
+        shouldStickToBottomRef.current = true;
+      }
+    });
+  }, [messages, messagesLoading]);
 
   useEffect(() => {
     if (document.hidden) return;
@@ -1104,6 +1149,8 @@ export default function WhatsAppInboxPage() {
               </div>
 
               <div
+                ref={messagesContainerRef}
+                onScroll={handleMessagesScroll}
                 className={`flex-1 overflow-y-auto px-4 py-3 ${WHATSAPP_WALLPAPER_CLASS}`}
                 style={whatsAppWallpaperStyle}
               >
