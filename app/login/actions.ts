@@ -1,5 +1,6 @@
 "use server";
 
+import { getAuthCookieOptions } from "@/lib/cookie-options";
 import { isAdminUserByIdentifier, resolveNocoDbUserId } from "@/lib/nocodb";
 import {
   buildOtpSessionToken,
@@ -269,13 +270,7 @@ async function buildLoginSessionToken(
 }
 
 async function setSessionCookie(token: string): Promise<void> {
-  (await cookies()).set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  });
+  (await cookies()).set(SESSION_COOKIE, token, getAuthCookieOptions(60 * 60 * 8));
 }
 
 async function verifyLoginOtpWebhook(
@@ -576,13 +571,7 @@ export async function loginAction(formData: FormData): Promise<void> {
       cookieStore.set(
         LOGIN_PENDING_COOKIE,
         encodeLoginPendingPayload({ email, password, from, createdAt: Date.now() }),
-        {
-          httpOnly: true,
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-          path: "/",
-          maxAge: 60 * 10,
-        }
+        getAuthCookieOptions(60 * 10)
       );
       redirect(`/login?loginOtpRequired=1&loginEmail=${encodeURIComponent(email)}`);
     }
@@ -686,13 +675,7 @@ export async function registerAction(formData: FormData): Promise<void> {
   (await cookies()).set(
     REGISTER_PENDING_COOKIE,
     encodeRegisterPendingPayload({ email, password, createdAt: Date.now() }),
-    {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 10,
-    }
+    getAuthCookieOptions(60 * 10)
   );
 
   redirect(`/login?showRegister=1&otpRequired=1&registerEmail=${encodeURIComponent(email)}`);

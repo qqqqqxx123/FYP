@@ -1,3 +1,4 @@
+import { getAuthCookieOptions } from "@/lib/cookie-options";
 import { resolveNocoDbUserId } from "@/lib/nocodb";
 import {
   buildSessionValue,
@@ -53,13 +54,7 @@ export async function ensureSessionIncludesNocoDbUserId(): Promise<void> {
     cookieStore.set(
       SESSION_COOKIE,
       buildSessionValue(buildOtpSessionToken(userId, email), isAdminSession(session)),
-      {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        maxAge: 60 * 60 * 8,
-      }
+      getAuthCookieOptions(60 * 60 * 8)
     );
   } catch {
     // Called outside a Route Handler / Server Action — skip cookie write.
