@@ -7,6 +7,7 @@ import {
   isAiScamDetectAgentContact,
 } from "@/lib/whatsapp-phone";
 import { parseWhatsAppSlotFromSessionId } from "@/lib/whatsapp-session-id";
+import { useDashboardHeaderColor } from "@/lib/use-dashboard-header-color";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const WHATSAPP_INBOX_SESSION_STORAGE_KEY = "whatsapp-inbox-active-session";
@@ -435,6 +436,7 @@ function ScamReportModal({
 }
 
 export default function WhatsAppInboxPage() {
+  const { headerBarStyle } = useDashboardHeaderColor();
   const [connectedSessions, setConnectedSessions] = useState<WhatsAppInboxSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(true);
@@ -1153,7 +1155,10 @@ export default function WhatsAppInboxPage() {
             </div>
           ) : (
             <>
-              <div className="flex shrink-0 items-center gap-3 border-b border-emerald-800/20 bg-gradient-to-r from-[#075e54] to-emerald-600 px-4 py-3 text-white shadow-md">
+              <div
+                className="flex shrink-0 items-center gap-3 border-b border-white/15 px-4 py-3 text-white shadow-md"
+                style={{ backgroundImage: headerBarStyle }}
+              >
                 <ConversationAvatar
                   tone="onColor"
                   conversation={
@@ -1241,16 +1246,17 @@ export default function WhatsAppInboxPage() {
                                   </div>
                                 ) : null}
                                 {m.voiceUrl ? (
-                                  <div className="mb-2 flex justify-center">
-                                    <div className="w-full max-w-[18rem] rounded-lg bg-gradient-to-r from-[#075e54] to-emerald-600 p-1.5 shadow-sm">
-                                      <audio
-                                        controls
-                                        preload="metadata"
-                                        className="inbox-voice-player block w-full"
-                                      >
-                                        <source src={getInboxMediaSrc(m.voiceUrl)} />
-                                      </audio>
-                                    </div>
+                                  <div
+                                    className="inbox-voice-player-wrap mb-2 w-full rounded-lg p-1.5 shadow-sm"
+                                    style={{ backgroundImage: headerBarStyle }}
+                                  >
+                                    <audio
+                                      controls
+                                      preload="metadata"
+                                      className="inbox-voice-player block w-full"
+                                    >
+                                      <source src={getInboxMediaSrc(m.voiceUrl)} />
+                                    </audio>
                                   </div>
                                 ) : null}
                                 {shouldShowMessageText(m) ? (
