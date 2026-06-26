@@ -1,6 +1,13 @@
 "use server";
 
 import { getAuthCookieOptions } from "@/lib/cookie-options";
+import {
+  getLoginRequestOtpWebhookUrl,
+  getLoginVerifyOtpWebhookUrl,
+  getLogoutWebhookUrl,
+  getRegisterRequestOtpWebhookUrl,
+  getRegisterVerifyOtpWebhookUrl,
+} from "@/lib/auth-webhook-env";
 import { isAdminUserByIdentifier, resolveNocoDbUserId } from "@/lib/nocodb";
 import {
   buildOtpSessionToken,
@@ -16,39 +23,6 @@ const REGISTER_PENDING_COOKIE = "register-pending";
 const LOGIN_PENDING_COOKIE = "login-pending";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const STRONG_PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-
-function getLoginRequestOtpWebhookUrl(): string | undefined {
-  return (
-    process.env.LOGIN_REQUEST_OTP_WEBHOOK_URL?.trim() ||
-    process.env.AUTH_REQUEST_OTP_WEBHOOK_URL?.trim() ||
-    undefined
-  );
-}
-
-function getLoginVerifyOtpWebhookUrl(): string | undefined {
-  return process.env.LOGIN_OTP_WEBHOOK_URL?.trim() || undefined;
-}
-
-function getRegisterRequestOtpWebhookUrl(): string | undefined {
-  return (
-    process.env.REGISTER_OTP_WEBHOOK_URL?.trim() ||
-    process.env.REGISTER_WEBHOOK_URL?.trim() ||
-    process.env.AUTH_REGISTER_OTP_WEBHOOK_URL?.trim() ||
-    undefined
-  );
-}
-
-function getRegisterVerifyOtpWebhookUrl(): string | undefined {
-  return (
-    process.env.REGISTER_Ver_OTP_WEBHOOK?.trim() ||
-    process.env.REGISTER_VERIFY_OTP_WEBHOOK_URL?.trim() ||
-    undefined
-  );
-}
-
-function getLogoutWebhookUrl(): string | undefined {
-  return process.env.LOGOUT_WEBHOOK_URL?.trim() || undefined;
-}
 
 function getN8nWebhookUrlCandidates(url: string): string[] {
   const trimmed = url.trim();
@@ -500,13 +474,16 @@ async function requestRegisterOtpWebhook(email: string, password: string): Promi
 
 async function verifyRegisterOtpWebhook(
   email: string,
-  otp: string
+  otp: string,
+  password: string
 ): Promise<{ verified: boolean; error?: string }> {
   const webhookUrl = getRegisterVerifyOtpWebhookUrl();
 
   if (!webhookUrl) {
     return { verified: false, error: "Register verify webhook is not configured" };
   }
+
+  const nocodbUserId = await resolveNocoDbUserId(email);
 
   try {
     const { response, data: rawData } = await fetchN8nWebhook(webhookUrl, {
@@ -515,7 +492,11 @@ async function verifyRegisterOtpWebhook(
       body: JSON.stringify({
         event: "register_verify_otp",
         email,
+        username: email,
         otp,
+        password,
+        userId: nocodbUserId ?? undefined,
+        Id: nocodbUserId ?? undefined,
         system: "AI.S.D.S",
         requestedAt: new Date().toISOString(),
       }),
@@ -529,7 +510,9 @@ async function verifyRegisterOtpWebhook(
       return { verified: false, error: message };
     }
 
-    if (isOtpVerifiedResponse(data)) return { verified: true };
+    if (isOtpVerifiedResponse(data) || collectWebhookEntries(data).some((entry) => isWebhookSuccess(entry))) {
+      return { verified: true };
+    }
 
     if (isRegisterWebhookFailure(data)) {
       return {
@@ -708,7 +691,7 @@ export async function verifyRegisterOtpAction(formData: FormData): Promise<void>
     );
   }
 
-  const verifyResult = await verifyRegisterOtpWebhook(registerEmail, otp);
+  const verifyResult = await verifyRegisterOtpWebhook(registerEmail, otp, pending.password);
   if (!verifyResult.verified) {
     redirect(
       `/login?showRegister=1&otpRequired=1&registerEmail=${encodeURIComponent(
