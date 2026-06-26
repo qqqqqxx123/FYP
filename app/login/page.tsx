@@ -8,6 +8,7 @@ import {
 } from "./actions";
 import { AuthFormFields, AuthSubmitButton } from "./auth-form-ui";
 import { OtpInput } from "./otp-input";
+import { PasswordInput } from "./password-input";
 
 interface LoginPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -117,14 +118,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 <label htmlFor="password" className="mb-2 block text-xl font-medium text-slate-700">
                   Password
                 </label>
-                <input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
-                  required
                   autoComplete="current-password"
                   placeholder="Enter your password"
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-xl text-slate-800 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                  required
                 />
               </div>
 
@@ -211,14 +210,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     <label htmlFor="register-password" className="mb-2 block text-xl font-medium text-slate-700">
                       Password
                     </label>
-                    <input
+                    <PasswordInput
                       id="register-password"
                       name="password"
-                      type="password"
-                      required
                       autoComplete="new-password"
                       placeholder="At least 8 chars with letters, numbers, symbols"
-                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-xl text-slate-800 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                      required
                     />
                   </div>
 
@@ -229,14 +226,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     >
                       Re-enter Password
                     </label>
-                    <input
+                    <PasswordInput
                       id="register-confirm-password"
                       name="confirmPassword"
-                      type="password"
-                      required
                       autoComplete="new-password"
                       placeholder="Re-enter your password"
-                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-xl text-slate-800 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                      required
                     />
                   </div>
 
